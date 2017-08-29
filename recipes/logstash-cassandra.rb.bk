@@ -1,0 +1,46 @@
+private_ip = node["opsworks"]["layers"]["elasticsearch-kibana"]["instances"]["elasticsearch-kibana1"]["private_ip"]
+
+package 'jdk-8u144-linux-x64.rpm' do
+  source "/tmp/jdk-8u144-linux-x64.rpm"
+  action :nothing
+end
+
+cookbook_file "/tmp/jdk-8u144-linux-x64.rpm" do
+  source "jdk-8u144-linux-x64.rpm"
+  action :create
+  notifies :install, "package[jdk-8u144-linux-x64.rpm]", :immediately
+end
+
+package 'logstash-5.5.1.rpm' do
+  source "/tmp/logstash-5.5.1.rpm"
+  action :nothing
+end
+
+remote_file '/tmp/logstash-5.5.1.rpm' do
+  source 'https://artifacts.elastic.co/downloads/logstash/logstash-5.5.1.rpm'
+  action :create
+  notifies :install, "package[logstash-5.5.1.rpm]", :immediately
+end
+
+template '/etc/logstash/conf.d/01_config.conf' do
+  source 'logstash/01_config.conf'
+  variables( :private_ip => private_ip )
+  owner 'root'
+  group 'root'
+  mode '0755'
+end
+
+template '/etc/logstash/jvm.options' do
+  source 'logstash/jvm.options'
+  owner 'root'
+  group 'root'
+  mode '0755'
+end
+
+#service "logstash" do
+#  action :start
+#end
+
+execute 'logstash-start' do
+  command 'initctl start logstash '
+end

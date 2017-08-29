@@ -1,0 +1,2 @@
+server.host: "<%= @private_ip %>"
+elasticsearch.url: "http://<%= @private_ip %>:9200"
